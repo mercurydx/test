@@ -3,25 +3,38 @@ version: '3.8'
 services:
   web:
     build: .
-    command: python main.py
-    volumes:
-      - ./:/usr/src/app/
+    # Правильная команда запуска FastAPI через uvicorn
+    command: uvicorn main:app --host 0.0.0.0 --port 11000
     ports:
-      - 11000:11000
+      - "11000:11000"
     env_file:
       - ./.env
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy # ЖДЕМ, пока Postgres не скажет, что он полностью готов!
+    restart: on-failure
+
   postgres:
-    image: postgres
+    image: postgres:15-alpine
     ports:
-      - 5432:5432
-    env_file:
-      - ./.env
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-app}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # Проверка здоровья: контейнер считается "healthy" только когда БД готова принимать подключения
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-app}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   redis:
-    image: redis:alpine
+    image: redis:7-alpine
     ports:
-      - 6379:6379
-    env_file:
-      - ./.env
+      - "6379:6379"
+
+volumes:
+  postgres_data:
