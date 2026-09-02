@@ -9,9 +9,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=on
 
 # Устанавливаем системные зависимости для сборки
+# Добавили libuv1-dev для компиляции uvloop!
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
+    libuv1-dev \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
@@ -25,7 +27,7 @@ RUN pip install --upgrade pip && \
     pip install pipenv && \
     pipenv requirements > requirements.txt
 
-# Устанавливаем зависимости через pip (более надежно)
+# Устанавливаем зависимости через pip
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Копируем исходный код приложения
@@ -40,8 +42,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
 # Устанавливаем ТОЛЬКО runtime-зависимости
+# Добавили libuv1 для работы uvloop в рантайме!
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
+    libuv1 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /usr/src/app
