@@ -7,7 +7,7 @@ name = "pypi"
 fastapi = "*"
 uvicorn = "*"
 alembic = "*"
-psycopg2 = "*"
+psycopg2-binary = "*"
 databases = {extras = ["postgresql"], version = "*"}
 asyncpg = "*"
 python-jose = {extras = ["cryptography"], version = "*"}
