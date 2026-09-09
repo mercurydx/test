@@ -37,3 +37,4 @@ USER appuser
 EXPOSE 8080
 
 ENTRYPOINT ["/app/server"]
+CMD [ "--port", "3000" ]
