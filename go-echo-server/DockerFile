@@ -1,0 +1,39 @@
+# ==========================================
+# ЭТАП 1: BUILDER (Сборка)
+# ==========================================
+FROM golang:1.23-alpine AS builder
+
+WORKDIR /src
+
+# Сначала копируем только go.mod — кешируем зависимости
+COPY go.mod ./
+RUN go mod download
+
+# Теперь копируем исходники
+COPY . .
+
+# Собираем статический бинарник
+RUN CGO_ENABLED=0 GOOS=linux go build \
+    -trimpath \
+    -ldflags="-s -w" \
+    -o /app/server .
+
+# ==========================================
+# ЭТАП 2: RUNTIME (Финальный образ)
+# ==========================================
+FROM alpine:3.20 AS runtime
+
+WORKDIR /app
+
+# В Alpine используем adduser, а не useradd
+RUN adduser -D -u 1000 appuser
+
+# Копируем бинарник сразу с нужным владельцем (экономим слой)
+COPY --from=builder --chown=appuser:appuser /app/server /app/server
+
+USER appuser
+
+# ВАЖНО: должно совпадать с портом в main.go!
+EXPOSE 8080
+
+ENTRYPOINT ["/app/server"]
