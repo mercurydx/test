@@ -34,7 +34,7 @@ COPY --from=builder --chown=appuser:appuser /app/server /app/server
 USER appuser
 
 # ВАЖНО: должно совпадать с портом в main.go!
-EXPOSE 8080
+EXPOSE 3000
 
 ENTRYPOINT ["/app/server"]
 CMD [ "--port", "3000" ]
