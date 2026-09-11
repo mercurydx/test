@@ -6,7 +6,7 @@ FROM golang:1.23-alpine AS builder
 WORKDIR /src
 
 # Сначала копируем только go.mod — кешируем зависимости
-COPY go.mod ./
+COPY go.mod go.sum ./
 RUN go mod download
 
 # Теперь копируем исходники

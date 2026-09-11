@@ -3,47 +3,53 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
+	"math/rand"
 	"net/http"
+	"sync/atomic"
 	"time"
+
+	"github.com/google/uuid"
 )
 
-// Ответ для корневого маршрута
-type RootResponse struct {
+// Счётчик запросов — потокобезопасный
+var requestCounter int64
+
+// Список случайных фраз
+var phrases = []string{
+	"🚀 Полетели!",
+	"🎉 Отличный день для кода!",
+	"☕ Время для кофе и curl",
+	"🔥 Сервер горяч, как мой процессор",
+	"🌌 Бесконечность не предел",
+	"🎸 Rock'n'roll is alive",
+	"🐳 Docker — наше всё",
+	"💡 Идея родилась в душе",
+}
+
+type Response struct {
+	RequestID string `json:"request_id"`
+	RequestNo int64  `json:"request_no"`
 	Message   string `json:"message"`
 	Timestamp string `json:"timestamp"`
-	RemoteIP  string `json:"remote_ip"`
 }
 
-// Ответ для /echo
-type EchoResponse struct {
-	Method  string              `json:"method"`
-	Path    string              `json:"path"`
-	Headers map[string][]string `json:"headers"`
-	Body    string              `json:"body"`
-}
+func handler(w http.ResponseWriter, r *http.Request) {
+	// Атомарно увеличиваем счётчик (потокобезопасно!)
+	no := atomic.AddInt64(&requestCounter, 1)
 
-func rootHandler(w http.ResponseWriter, r *http.Request) {
-	resp := RootResponse{
-		Message:   "Привет! Я Go-сервер из GitHub 🚀",
-		Timestamp: time.Now().Format(time.RFC3339),
-		RemoteIP:  r.RemoteAddr,
-	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
-}
+	// Генерируем уникальный ID
+	reqID := uuid.New().String()
 
-func echoHandler(w http.ResponseWriter, r *http.Request) {
-	// Читаем тело запроса
-	bodyBytes, _ := io.ReadAll(r.Body)
-	defer r.Body.Close()
+	// Выбираем случайную фразу
+	rand.Seed(time.Now().UnixNano())
+	phrase := phrases[rand.Intn(len(phrases))]
 
-	resp := EchoResponse{
-		Method:  r.Method,
-		Path:    r.URL.Path,
-		Headers: r.Header,
-		Body:    string(bodyBytes),
+	resp := Response{
+		RequestID: reqID,
+		RequestNo: no,
+		Message:   phrase,
+		Timestamp: time.Now().Format(time.RFC3339Nano),
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -51,10 +57,9 @@ func echoHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/", rootHandler)
-	http.HandleFunc("/echo", echoHandler)
+	http.HandleFunc("/", handler)
 
-	port := ":3000"
+	port := ":8080"
 	fmt.Printf("🚀 Сервер запущен на http://localhost%s\n", port)
 	log.Fatal(http.ListenAndServe(port, nil))
 }
