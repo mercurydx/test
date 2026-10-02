@@ -1,54 +1,71 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
-	"math/rand"
 	"net/http"
-	"sync/atomic"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// Счётчик запросов — потокобезопасный
-var requestCounter int64
-
-// Список случайных фраз
-var phrases = []string{
-	"🚀 Полетели!",
-	"🎉 Отличный день для кода!",
-	"☕ Время для кофе и curl",
-	"🔥 Сервер горяч, как мой процессор",
-	"🌌 Бесконечность не предел",
-	"🎸 Rock'n'roll is alive",
-	"🐳 Docker — наше всё",
-	"💡 Идея родилась в душе",
-}
+var dbPool *pgxpool.Pool
 
 type Response struct {
 	RequestID string `json:"request_id"`
-	RequestNo int64  `json:"request_no"`
-	Message   string `json:"message"`
+	Quote     string `json:"quote"`
 	Timestamp string `json:"timestamp"`
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	// Атомарно увеличиваем счётчик (потокобезопасно!)
-	no := atomic.AddInt64(&requestCounter, 1)
+func initDB() {
+	// Берем настройки из переменных окружения (с дефолтными значениями)
+	dbHost := getEnv("DB_HOST", "localhost")
+	dbPort := getEnv("DB_PORT", "5432")
+	dbUser := getEnv("DB_USER", "postgres")
+	dbPass := getEnv("DB_PASSWORD", "postgres")
+	dbName := getEnv("DB_NAME", "quotes_db")
 
-	// Генерируем уникальный ID
+	connString := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", dbUser, dbPass, dbHost, dbPort, dbName)
+
+	var err error
+	dbPool, err = pgxpool.New(context.Background(), connString)
+	if err != nil {
+		log.Fatalf("Не удалось подключиться к БД: %v", err)
+	}
+
+	// Проверка соединения
+	if err := dbPool.Ping(context.Background()); err != nil {
+		log.Fatalf("Не удалось пингануть БД: %v", err)
+	}
+	log.Println("✅ Успешное подключение к PostgreSQL")
+}
+
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
+}
+
+func handler(w http.ResponseWriter, r *http.Request) {
 	reqID := uuid.New().String()
 
-	// Выбираем случайную фразу
-	rand.Seed(time.Now().UnixNano())
-	phrase := phrases[rand.Intn(len(phrases))]
+	var quote string
+	// Берем случайную цитату из БД
+	err := dbPool.QueryRow(context.Background(), "SELECT text FROM quotes ORDER BY RANDOM() LIMIT 1").Scan(&quote)
+	if err != nil {
+		http.Error(w, "Ошибка получения цитаты из БД", http.StatusInternalServerError)
+		log.Printf("Ошибка БД: %v", err)
+		return
+	}
 
 	resp := Response{
 		RequestID: reqID,
-		RequestNo: no,
-		Message:   phrase,
+		Quote:     quote,
 		Timestamp: time.Now().Format(time.RFC3339Nano),
 	}
 
@@ -57,9 +74,12 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	initDB()
+	defer dbPool.Close()
+
 	http.HandleFunc("/", handler)
 
-	port := ":8080"
-	fmt.Printf("🚀 Сервер запущен на http://localhost%s\n", port)
-	log.Fatal(http.ListenAndServe(port, nil))
+	port := getEnv("PORT", "3000")
+	fmt.Printf("🚀 Сервер запущен на http://localhost:%s\n", port)
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
