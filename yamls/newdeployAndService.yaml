@@ -1,0 +1,42 @@
+# ==========================================
+# 1. DEPLOYMENT (Запускает твои поды)
+# ==========================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app-deployment
+  labels:
+    app: my-app
+spec:
+  replicas: 3 # Сколько копий (подов) запустить
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app # <-- Эти лейблы связывают поды с сервисом
+    spec:
+      containers:
+      - name: my-app-container
+        image: server:1.0 # <--- ЗАМЕНИ НА ТОЧНОЕ ИМЯ ОБРАЗА ИЗ `docker images`
+        imagePullPolicy: IfNotPresent # <--- КРИТИЧНО ВАЖНО: Говорит k8s брать образ локально, а не качать из интернета
+        ports:
+        - containerPort: 3000 # <--- ЗАМЕНИ НА ПОРТ, КОТОРЫЙ СЛУШАЕТ ТВОЕ ПРИЛОЖЕНИЕ ВНУТРИ КОНТЕЙНЕРА
+
+---
+# ==========================================
+# 2. SERVICE (ClusterIP - внутренний балансировщик)
+# ==========================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-service
+spec:
+  type: ClusterIP # Можно было не писать, это значение по умолчанию
+  selector:
+    app: my-app # <-- ДОЛЖЕН ТОЧНО СОВПАДАТЬ С ЛЕЙБЛАМИ В DEPLOYMENT ВЫШЕ
+  ports:
+  - protocol: TCP
+    port: 8080 # <-- Порт, на который будут стучаться ДРУГИЕ ПОДЫ внутри кластера
+    targetPort: 3000 # <-- Порт, на который сервис перенаправит трафик внутри самого пода (совпадает с containerPort)

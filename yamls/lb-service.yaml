@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-lb-service
+spec:
+  type: LoadBalancer          # <--- ГЛАВНОЕ ИЗМЕНЕНИЕ
+  selector:
+    app: my-app               # <--- Должен совпадать с лейблами твоего деплоймента
+  ports:
+  - protocol: TCP
+    port: 80                  # Внешний порт балансировщика
+    targetPort: 3000          # Порт внутри пода (твой Go-сервер)

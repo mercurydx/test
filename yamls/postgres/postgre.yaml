@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-deployment
+  namespace: my-namespace
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_PASSWORD
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_DB
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-config
+  namespace: my-namespace
+data:
+  init.sql: |
+    CREATE TABLE quotes (id SERIAL PRIMARY KEY, text TEXT NOT NULL);
+    INSERT INTO quotes (text) VALUES 
+    ('🚀 Полетели!'),
+    ('🎉 Отличный день для кода!'),
+    ('☕ Время для кофе и curl'),
+    ('🔥 Сервер горяч, как мой процессор'),
+    ('🐳 Docker и Kubernetes — наше всё');
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  namespace: my-namespace
+spec:
+  type: ClusterIP
+  selector:
+    app: postgres
+  ports:
+  - protocol: TCP
+    port: 5432
+    targetPort: 5432
