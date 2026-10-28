@@ -1,0 +1,12 @@
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ include "openresty-art.fullname" . }}-html
+  labels:
+    {{- include "openresty-art.labels" . | nindent 4 }}
+data:
+{{- range $name, $value := .Values.html }}
+  {{ $name }}.html: |
+{{ $value | indent 4 }}
+{{- end }}

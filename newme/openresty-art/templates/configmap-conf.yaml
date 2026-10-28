@@ -1,0 +1,10 @@
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ include "openresty-art.fullname" . }}-conf
+  labels:
+    {{- include "openresty-art.labels" . | nindent 4 }}
+data:
+  default.conf: |
+{{ .Values.conf.default  | indent 4 }}
