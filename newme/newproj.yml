@@ -1,0 +1,17 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: system-utils
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: Cluster utilities, monitoring, logs and etc
+  sourceRepos:
+  - 'https://github.com/mercurydx/test.git'
+  destinations:
+  - server: '*'
+    namespace: '*'  # <-- Разрешает деплой в любой namespace
+  clusterResourceWhitelist:
+  - group: '*'
+    kind: '*'       # <-- Разрешает создание кластерных ресурсов (включая сами Namespace)
