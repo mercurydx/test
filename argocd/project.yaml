@@ -5,21 +5,45 @@ metadata:
   namespace: argocd
 spec:
   description: My utility projects
+  
+  # Разрешенные источники репозиториев
   sourceRepos:
-    - 'https://github.com/mercurydx/test.git' # Ваш основной git-репо
-    - 'oci://registry-1.docker.io/bitnamicharts'         # <-- ДОБАВЬТЕ ЭТУ СТРОКУ
+    - 'https://github.com/mercurydx/test.git'
+    - 'oci://registry-1.docker.io/bitnamicharts'
+    - 'https://github.com/bitnami/charts.git'
+  
+  # Куда можно деплоить ресурсы
   destinations:
     - server: 'https://kubernetes.default.svc'
-      namespaces:
-        - '*' # Или конкретные неймспейсы, например ['default', 'databases']
-  clusterResourceWhitelist: []
+      # ВАЖНО: Здесь должно быть 'namespace' (единственное число) со звездочкой,
+      # либо массив namespaces, но зависит от версии CRD. 
+      # Самый безопасный способ для '*' — часто используется просто строка или пустой массив если все разрешены по умолчанию, 
+      # но явный запрет лучше. Попробуем стандартный вид:
+      namespace: '*' 
+
+  # Разрешение конкретных типов ресурсов в указанных неймспейсах
+  # Если оставить пустым [], то разрешено ВСЕ. 
+  # Но мы явно перечислим то, что нужно Postgres и Helm:
+  clusterResourceWhitelist: [] # Пусто = ничего глобального (ClusterRole и т.д.) не разрешаем, кроме дефолтных
+  
   namespaceResourceWhitelist:
+    - group: 'argoproj.io'
+      kind: Application 
     - group: ''
       kind: Secret
     - group: ''
       kind: ConfigMap
+    - group: ''
+      kind: Service
+    - group: ''
+      kind: PersistentVolumeClaim
     - group: apps
       kind: Deployment
+    - group: apps
+      kind: StatefulSet # Важно для БД!
     - group: batch
       kind: Job
-    # ... другие ресурсы
+    - group: batch
+      kind: CronJob
+    - group: policy
+      kind: PodDisruptionBudget
