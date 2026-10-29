@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: system-utils
+  namespace: argocd
+spec:
+  description: My utility projects
+  sourceRepos:
+    - 'https://github.com/mercurydx/test.git' # Ваш основной git-репо
+    - 'oci://registry-1.docker.io/bitnamicharts'         # <-- ДОБАВЬТЕ ЭТУ СТРОКУ
+  destinations:
+    - server: 'https://kubernetes.default.svc'
+      namespaces:
+        - '*' # Или конкретные неймспейсы, например ['default', 'databases']
+  clusterResourceWhitelist: []
+  namespaceResourceWhitelist:
+    - group: ''
+      kind: Secret
+    - group: ''
+      kind: ConfigMap
+    - group: apps
+      kind: Deployment
+    - group: batch
+      kind: Job
+    # ... другие ресурсы

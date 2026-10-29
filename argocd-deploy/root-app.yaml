@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root-app-of-apps
+  namespace: argocd
+spec:
+  project: system-utils
+  source:
+    repoURL: https://github.com/mercurydx/test.git # Ваш репо
+    targetRevision: main # Ваша ветка
+    path: argocd-deploy # Папка, где лежат другие application.yaml файлы
+    
+    directory:
+      recurse: true # Искать во всех подпапках внутри apps/
+      
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: argocd
+  
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
