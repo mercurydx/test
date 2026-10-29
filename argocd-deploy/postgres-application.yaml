@@ -1,0 +1,66 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: postgresql-prod-like
+  namespace: argocd
+spec:
+  project: default
+  
+  source:
+    repoURL: oci://registry-1.docker.io/bitnamicharts
+    chart: postgresql
+    targetRevision: 17.1.3 # Проверьте актуальную версию через helm show chart
+    
+    helm:
+      values: |
+        auth:
+          enablePostgresPassword: true
+          database: "myappdb"
+          username: "myuser"
+          
+          existingSecret: "postgres-credentials"
+          
+        primary:
+          persistence:
+            enabled: true
+            size: 5Gi
+            storageClass: "" 
+            
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+              
+          podAntiAffinityPreset: soft 
+
+        metrics:
+          enabled: true
+          service:
+            type: ClusterIP
+            port: 9187
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+
+        service:
+          type: ClusterIP
+          ports:
+            postgresql: 5432
+
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: databases
+  
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
