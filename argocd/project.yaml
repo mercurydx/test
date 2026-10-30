@@ -24,26 +24,20 @@ spec:
   # Разрешение конкретных типов ресурсов в указанных неймспейсах
   # Если оставить пустым [], то разрешено ВСЕ. 
   # Но мы явно перечислим то, что нужно Postgres и Helm:
-  clusterResourceWhitelist: [] # Пусто = ничего глобального (ClusterRole и т.д.) не разрешаем, кроме дефолтных
-  
-  namespaceResourceWhitelist:
-    - group: 'argoproj.io'
-      kind: Application 
+  # Неважно, что здесь было раньше — схема работает так:
+  # если Whitelist ПУСТОЙ или не задан, разрешены ВСЕ ресурсы (default allow-all).
+  # Ограничения делаются через Blacklist, а не Whitelist.
+  clusterResourceWhitelist: []
+
+  # Позволяем создавать ресурсы из того же namespace argocd (для apps-in-any-namespace)
+  sourceNamespaces:
+    - argocd
+
+  # Запрещаем только опасные глобальные вещи, остальное разрешено
+  # (включая NetworkPolicy, ServiceAccount, Ingress и т.д.)
+  clusterResourceBlacklist:
     - group: ''
-      kind: Secret
-    - group: ''
-      kind: ConfigMap
-    - group: ''
-      kind: Service
-    - group: ''
-      kind: PersistentVolumeClaim
-    - group: apps
-      kind: Deployment
-    - group: apps
-      kind: StatefulSet # Важно для БД!
-    - group: batch
-      kind: Job
-    - group: batch
-      kind: CronJob
-    - group: policy
-      kind: PodDisruptionBudget
+      kind: ResourceQuota
+    - group: apiregistration.k8s.io
+      kind: APIService
+  namespaceResourceBlacklist: []

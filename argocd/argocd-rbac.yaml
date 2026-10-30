@@ -14,7 +14,11 @@ data:
     # === Приложения (Applications) ===
     p, role:developer, applications, get, */*, allow
     p, role:developer, applications, sync, */*, allow
+    p, role:developer, applications, create, */*, allow
+    p, role:developer, applications, update, */*, allow
+    p, role:developer, applications, delete, */*, allow
     p, role:developer, applications, action/*, */*, allow
+    p, role:developer, applications, override, */*, allow
     p, role:developer, logs, get, */*, allow
     
     # === Репозитории (Repositories) ===
