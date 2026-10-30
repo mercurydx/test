@@ -1,16 +1,16 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: postgresql-prod-like
+  name: postgresql
   namespace: argocd
 spec:
   project: system-utils
   
   source:
     # ИСПОЛЬЗУЕМ GIT-РЕПОЗИТОРИЙ BITNAMI
-    repoURL: https://github.com/bitnami/charts.git
+    repoURL: https://github.com/mercurydx/test.git
     # ПУТЬ К ЧАРТУ ВНУТРИ РЕПО
-    path: bitnami/postgresql
+    path: argocd-deploy/charts/bitnami/postgresql
     # ВЕТКА ИЛИ ТЕГ. 
     # Лучше использовать тег, чтобы зафиксировать версию.
     # Например, tag "postgresql-15.5.0" соответствует версии чарта 15.5.0
@@ -18,7 +18,7 @@ spec:
     helm:
       values: |
         auth:
-          enablePostgresPassword: true
+          enablePostgresUser: true
           database: "myappdb"
           username: "myuser"
           
