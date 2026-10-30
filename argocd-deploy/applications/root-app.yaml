@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://github.com/mercurydx/test.git # Ваш репо
     targetRevision: main # Ваша ветка
-    path: argocd-deploy # Папка, где лежат другие application.yaml файлы
+    path: argocd-deploy/applications # Папка, где лежат другие application.yaml файлы
     
     directory:
       recurse: true # Искать во всех подпапках внутри apps/
