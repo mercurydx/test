@@ -12,6 +12,8 @@ spec:
     
     directory:
       recurse: true # Искать во всех подпапках внутри apps/
+      # Не генерировать Application из самого root-app.yaml
+      exclude: 'root-app.yaml'
       
   destination:
     server: 'https://kubernetes.default.svc'
