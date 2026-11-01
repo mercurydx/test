@@ -1,8 +1,0 @@
-.git
-.gitignore
-README.md
-Dockerfile
-.dockerignore
-server
-*.exe
-vendor/
