@@ -1,6 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  # Отдельный namespace позволяет удалить всю сетевую лабораторную
-  # одной командой, не затрагивая приложение DEVOPS MAY CRY.
-  name: network-proof
